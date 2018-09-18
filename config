@@ -1,0 +1,13 @@
+from multiprocessing import cpu_count
+
+HOST = '0.0.0.0'
+PORT = 8000
+DEBUG = True
+
+DB_ECHO = True
+DB_HOST = 'localhost'
+DB_DATABASE = 'libreban'
+
+FRONTEND_PATH = '../libreban-frontend/dist'
+
+WORKERS = 1
