@@ -87,8 +87,7 @@ async def root(request):
     return response.text('')
 
 @app.route('/board/<id:int>/add-ticket', methods=['POST'])
-async def test(request, id):
-    print(request.json)
+async def add_ticket(request, id):
     j = request.json
     board = await load_board(id)
     column = await Column.query.where(and_(Column.board_id == id, Column.cid == j['column'])).gino.first()
@@ -98,4 +97,19 @@ async def test(request, id):
     order.append(tkt.id)
     await column.update(ticket_order=order).apply()
     await dispatch(id, json.dumps({ 'type': 'add-ticket', 'tid': tkt.tid, 'idx': len(order) - 1, **request.json }))
+    return response.text('OK')
+
+@app.route('/board/<id:int>/remove-ticket', methods=['POST'])
+async def remote_ticket(request, id):
+    j = request.json
+    board = await load_board(id)
+    print(j)
+    ticket = await Ticket.query.where(and_(Ticket.board_id == id, Ticket.tid == j['tid'])).gino.first()
+    await ticket.delete()
+    async with db.transaction():
+        for cid, col in board.columns.items():
+            if request.json['tid'] in col.ticket_order:
+                col.ticket_order.remove(j['tid'])
+                await col.update(ticket_order=col.ticket_order).apply()
+    await dispatch(id, json.dumps({ 'type': 'remove-ticket', **request.json}))
     return response.text('OK')
